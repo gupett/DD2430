@@ -1,0 +1,7 @@
+.DS_Store
+test.py
+.idea
+model
+Models/__pycache__
+Training/__pycache__
+Word_embedding/*
