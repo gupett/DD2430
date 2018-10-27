@@ -1,6 +1,7 @@
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import CuDNNLSTM
 from tensorflow.keras.layers import Embedding
 
 
@@ -40,11 +41,12 @@ class LM_Model:
             ))
 
         # The output from the lstm is a 50 dim vector, return_sequences=True is needed so that the next layer in the LSTM will get its input
-        model.add(LSTM(50, stateful=state_full, return_sequences=True))
+        model.add(CuDNNLSTM(50, stateful=state_full, return_sequences=True))
         # Another LSTM layer
-        model.add(LSTM(50, stateful=state_full))
+        model.add(CuDNNLSTM(50, stateful=state_full))
         # A final dense layer with softmax activation to transform the output from LSTM to one hot rep for each word
         model.add(Dense(self.vocab_size, activation='softmax'))
+
         return model
 
     # function for solving the problem with having to predict with the same batch size as the training batch size

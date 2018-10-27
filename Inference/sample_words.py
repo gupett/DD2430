@@ -1,8 +1,10 @@
-from tensorflow.keras.models import load_model
+from tensorflow.keras import models
 import pickle
 from numpy import array
 import random
 import bisect
+
+from Models.LM_model import LM_Model
 
 def cumulative_distribution_function(probabilities):
     # floating point error
@@ -27,12 +29,15 @@ def sample_index_from_distribution(probabilities):
 # Must send in a model with batch size 1, otherwise can not sample one word at a time
 class sample_word:
     def __init__(self):
-        self.model = load_model('../model/lm_inference_model.hdf5')
 
         # Load the tokenizer from file
-        with open('../model/tokenizer/tokenizer.pickle', 'rb') as handle:
+        with open('./model/tokenizer/tokenizer.pickle', 'rb') as handle:
             tokenizer = pickle.load(handle)
         self.tokenizer = tokenizer
+
+        vocab_size = len(self.tokenizer.word_index) + 1
+        self.model = LM_Model(vocab_size, look_back=1, batch_size=1).model
+        self.model.load_weights('./model/best_weights.hdf5')
 
 
     def sample_new_sequence(self, text_sample):

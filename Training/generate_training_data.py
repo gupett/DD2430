@@ -2,6 +2,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.utils import to_categorical
 import numpy as np
 
+
 FILES = ['./treat-data/BNC/small-example/A00.txt']
 
 class generate_training_data:

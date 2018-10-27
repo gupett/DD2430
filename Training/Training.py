@@ -1,3 +1,4 @@
+from tensorflow.keras.callbacks import ModelCheckpoint
 import numpy as np
 import pickle
 from generate_training_data import generate_training_data
@@ -5,7 +6,7 @@ from generate_training_data import generate_training_data
 from Models.LM_model import LM_Model
 
 SLIDING_WINDOW_SIZE = 20
-BACH_SIZE = 4
+BATCH_SIZE = 4
 
 # Function for finding the largest number less than K+1 divisible by X
 def largest(X, K):
@@ -25,19 +26,19 @@ class Training:
         training_data = generate_training_data(sliding_window_size=SLIDING_WINDOW_SIZE)
         self.vocab_size = training_data.vocab_size
         self.tokenizer = training_data.tokenizer
-        self.lm_model = LM_Model(self.vocab_size, SLIDING_WINDOW_SIZE, BACH_SIZE)
+        self.lm_model = LM_Model(self.vocab_size, SLIDING_WINDOW_SIZE, BATCH_SIZE)
         self.model = self.lm_model.model
 
         X, y = training_data.training_data
         # Make sure length of training data is devisable, by the batch size, is a must since using stateful LSTM
-        self.trainingX = X[0:largest(BACH_SIZE, X.shape[0])]
+        self.trainingX = X[0:largest(BATCH_SIZE, X.shape[0])]
         print(self.trainingX.shape)
-        self.trainingY = y[0:largest(BACH_SIZE, y.shape[0])]
+        self.trainingY = y[0:largest(BATCH_SIZE, y.shape[0])]
         print(self.trainingY.shape)
 
         # Do not know if we should hav validation data
-        self.valX = X[0:largest(BACH_SIZE, X.shape[0])]
-        self.valY = y[0:largest(BACH_SIZE, y.shape[0])]
+        self.valX = X[0:largest(BATCH_SIZE, X.shape[0])]
+        self.valY = y[0:largest(BATCH_SIZE, y.shape[0])]
 
     def get_embedding_matrix(self):
         # load the entire embedding from file into a dictionary
@@ -71,8 +72,16 @@ class Training:
         model_history = dict()
         model_history['loss'] = []; model_history['val_loss'] = []
         model_history['acc'] = []; model_history['val_acc'] = []
+        
+        #file_path = './model/weights-{epoch:02d}-{loss:.4f}.hdf5'
+        file_path = './model/best_weights.hdf5'
+        checkpoint = ModelCheckpoint(file_path, monitor='loss', verbose=1, save_best_only=True, mode='min')
+        callbacks = [checkpoint]
+        self.model.fit(self.trainingX, self.trainingY, epochs=epochs, batch_size=BATCH_SIZE, callbacks=callbacks)
+        
+        '''
         for i in range(epochs):
-            epoch_history = self.model.fit(self.trainingX, self.trainingY, epochs=1, batch_size=BACH_SIZE, verbose=2, shuffle=False, validation_data=(self.valX, self.valY))
+            epoch_history = self.model.fit(self.trainingX, self.trainingY, epochs=1, batch_size=BATCH_SIZE, verbose=2, shuffle=False, validation_data=(self.valX, self.valY))
 
             # Store history
             model_history['loss'].append(epoch_history.history['loss'])
@@ -92,17 +101,17 @@ class Training:
                 # save training history for model
                 with open("./model/history/mode_history_{}".format(i), "wb") as file_pi:
                     pickle.dump(model_history, file_pi)
-
+        '''
 
         # Store the model after the last epoch
-        self.model.save('./model/lm_model_final.hdf5')
+        # self.model.save('./model/lm_model_final.hdf5')
         # save training history for model
-        with open("./model/history/mode_history_final", "wb") as file_pi:
-            pickle.dump(model_history, file_pi)
+        #with open("./model/history/mode_history_final", "wb") as file_pi:
+        #    pickle.dump(model_history, file_pi)
 
         # Create new model with same weights but different batch size
-        new_model = self.lm_model.redefine_model(self.model)
-        new_model.save('./model/lm_inference_model.hdf5')
+        #new_model = self.lm_model.redefine_model(self.model)
+        #new_model.save('./model/lm_inference_model.hdf5')
 
         # Save the tokenizer to file for use at inference time
         with open('./model/tokenizer/tokenizer.pickle', 'wb') as handle:
