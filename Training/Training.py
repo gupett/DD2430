@@ -3,10 +3,13 @@ import numpy as np
 import pickle
 from generate_training_data import generate_training_data
 
+from Models.base_line_LM_model import base_line_lm_model
 from Models.LM_model import LM_Model
 
 SLIDING_WINDOW_SIZE = 20
 BATCH_SIZE = 4
+USE_EMBEDDING = True
+MODEL = 'base_LM_Model'
 
 # Function for finding the largest number less than K+1 divisible by X
 def largest(X, K):
@@ -16,29 +19,36 @@ def largest(X, K):
 class Training:
 
     # data should be a tuple with trainingX, trainingY, valX and valY
-    def __init__(self, pre_trained_embedding=False):
-
-        # Extract and set up an embedding matrix from the pre-trained embedding
-        if pre_trained_embedding:
-            embedding_matrix = self.get_embedding_matrix()
-
+    def __init__(self, pre_trained_embedding=USE_EMBEDDING):
 
         training_data = generate_training_data(sliding_window_size=SLIDING_WINDOW_SIZE)
         self.vocab_size = training_data.vocab_size
         self.tokenizer = training_data.tokenizer
-        self.lm_model = LM_Model(self.vocab_size, SLIDING_WINDOW_SIZE, BATCH_SIZE)
-        self.model = self.lm_model.model
 
+        # Get training data
         X, y = training_data.training_data
         # Make sure length of training data is devisable, by the batch size, is a must since using stateful LSTM
-        self.trainingX = X[0:largest(BATCH_SIZE, X.shape[0])]
-        print(self.trainingX.shape)
         self.trainingY = y[0:largest(BATCH_SIZE, y.shape[0])]
-        print(self.trainingY.shape)
-
+        self.trainingX = X[0:largest(BATCH_SIZE, X.shape[0])]
         # Do not know if we should hav validation data
         self.valX = X[0:largest(BATCH_SIZE, X.shape[0])]
         self.valY = y[0:largest(BATCH_SIZE, y.shape[0])]
+
+        # Extract and set up an embedding matrix from the pre-trained embedding
+        self.embedding_matrix = None
+        if pre_trained_embedding:
+            self.embedding_matrix = self.get_embedding_matrix()
+        if MODEL == 'LM_Model':
+            self.lm_model = LM_Model(self.vocab_size, SLIDING_WINDOW_SIZE, BATCH_SIZE, self.tokenizer, embedding=self.embedding_matrix, use_embedding=pre_trained_embedding)
+            self.model = self.lm_model.model
+        elif MODEL == 'base_LM_Model':
+            bias_vector = self.get_bias_vector()
+            self.base_model = base_line_lm_model(self.vocab_size, BATCH_SIZE, SLIDING_WINDOW_SIZE, embedding=self.embedding_matrix, bias_vector=bias_vector, use_embedding=pre_trained_embedding)
+            self.model = self.base_model.model
+            print('shape of training data: {}'.format(self.trainingX.shape))
+            # Reshape training data so it fits the base_LM_model
+            # The first dimensions are (nr_training_samples, nr_time_steps_for_sample, feature_for_time_steps)
+            self.trainingX = self.trainingX.reshape(self.trainingX.shape[0], SLIDING_WINDOW_SIZE, 1)
 
     def get_embedding_matrix(self):
         # load the entire embedding from file into a dictionary
@@ -65,6 +75,10 @@ class Training:
 
         return embedding_matrix
 
+    def get_bias_vector(self):
+        bias = np.zeros((self.vocab_size,))
+        return bias
+
     def train(self, epochs):
         # With multiple non cohesive texts, this should be a loop over the texts, so that the model is reset
         # foreach new sequence of text
@@ -77,7 +91,7 @@ class Training:
         file_path = './model/best_weights.hdf5'
         checkpoint = ModelCheckpoint(file_path, monitor='loss', verbose=1, save_best_only=True, mode='min')
         callbacks = [checkpoint]
-        self.model.fit(self.trainingX, self.trainingY, epochs=epochs, batch_size=BATCH_SIZE, callbacks=callbacks)
+        self.model.fit(self.trainingX, self.trainingY, epochs=epochs, batch_size=BATCH_SIZE, callbacks=callbacks, verbose=0)
         
         '''
         for i in range(epochs):
