@@ -1,8 +1,9 @@
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import LearningRateScheduler
+from tensorflow.keras.optimizers import Adam
 import numpy as np
 import pickle
 from generate_training_data import generate_training_data
-
 from Models.LM_model import LM_Model
 
 SLIDING_WINDOW_SIZE = 20
@@ -13,6 +14,18 @@ def largest(X, K):
     # returning ans
     return (K - (K % X))
 
+# Learning rate scheduler for decay rate 0.5 for all consecutive epochs after first 4 epochsself.
+def step_decay(epoch):
+    initial_lrate = 1.0
+        drop = 0.5
+        epochs_drop = 4.0
+    if epoch > 4:
+        epochs_drop = 1
+        lrate = initial_lrate * \
+            np.pow(drop, np.floor((1 + epoch) / epochs_drop))
+        return lrate
+
+
 class Training:
 
     # data should be a tuple with trainingX, trainingY, valX and valY
@@ -22,11 +35,12 @@ class Training:
         if pre_trained_embedding:
             embedding_matrix = self.get_embedding_matrix()
 
-
-        training_data = generate_training_data(sliding_window_size=SLIDING_WINDOW_SIZE)
+        training_data = generate_training_data(
+            sliding_window_size=SLIDING_WINDOW_SIZE)
         self.vocab_size = training_data.vocab_size
         self.tokenizer = training_data.tokenizer
-        self.lm_model = LM_Model(self.vocab_size, SLIDING_WINDOW_SIZE, BATCH_SIZE)
+        self.lm_model = LM_Model(
+            self.vocab_size, SLIDING_WINDOW_SIZE, BATCH_SIZE)
         self.model = self.lm_model.model
 
         X, y = training_data.training_data
@@ -70,15 +84,31 @@ class Training:
         # foreach new sequence of text
         val_acc = 0
         model_history = dict()
-        model_history['loss'] = []; model_history['val_loss'] = []
-        model_history['acc'] = []; model_history['val_acc'] = []
-        
+        model_history['loss'] = []
+        model_history['val_loss'] = []
+        model_history['acc'] = []
+        model_history['val_acc'] = []
+
         #file_path = './model/weights-{epoch:02d}-{loss:.4f}.hdf5'
+        #Define callbacks
         file_path = './model/best_weights.hdf5'
-        checkpoint = ModelCheckpoint(file_path, monitor='loss', verbose=1, save_best_only=True, mode='min')
-        callbacks = [checkpoint]
-        self.model.fit(self.trainingX, self.trainingY, epochs=epochs, batch_size=BATCH_SIZE, callbacks=callbacks)
-        
+
+        #Save best model weights
+        checkpoint = ModelCheckpoint(
+            file_path, monitor='loss', verbose=1, save_best_only=True, mode='min')
+
+        # learning schedule callback
+        lrate = LearningRateScheduler(step_decay)
+        callbacks = [checkpoint, lrate];
+
+
+        # Compile model
+        adam = Adam(lr=0, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+        self.model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
+
+        self.model.fit(self.trainingX, self.trainingY, epochs=epochs,
+                       batch_size=BATCH_SIZE, callbacks=callbacks)
+
         '''
         for i in range(epochs):
             epoch_history = self.model.fit(self.trainingX, self.trainingY, epochs=1, batch_size=BATCH_SIZE, verbose=2, shuffle=False, validation_data=(self.valX, self.valY))
@@ -106,16 +136,18 @@ class Training:
         # Store the model after the last epoch
         # self.model.save('./model/lm_model_final.hdf5')
         # save training history for model
-        #with open("./model/history/mode_history_final", "wb") as file_pi:
+        # with open("./model/history/mode_history_final", "wb") as file_pi:
         #    pickle.dump(model_history, file_pi)
 
         # Create new model with same weights but different batch size
         #new_model = self.lm_model.redefine_model(self.model)
-        #new_model.save('./model/lm_inference_model.hdf5')
+        # new_model.save('./model/lm_inference_model.hdf5')
 
         # Save the tokenizer to file for use at inference time
         with open('./model/tokenizer/tokenizer.pickle', 'wb') as handle:
-            pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.tokenizer, handle,
+                        protocol=pickle.HIGHEST_PROTOCOL)
+
 
 if __name__ == '__main__':
     trainer = Training()

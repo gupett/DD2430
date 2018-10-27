@@ -16,7 +16,7 @@ class LM_Model:
         self.model = self.define_model(batch_size, self.look_back)
         # print(model.summary())
         # Now the model is evaluated based on accuracy/ should it be evaluated based on loss?
-        self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    # This is moved to LM_MODEL train()
 
     def define_model(self, batch_size, look_back, state_full=False):
         # Create the LM model
@@ -59,6 +59,3 @@ class LM_Model:
         model.set_weights(old_weights)
 
         return model
-
-
-
