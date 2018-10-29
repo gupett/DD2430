@@ -31,13 +31,13 @@ class sample_word:
     def __init__(self):
 
         # Load the tokenizer from file
-        with open('./model/tokenizer/tokenizer.pickle', 'rb') as handle:
+        with open('../model/tokenizer/tokenizer.pickle', 'rb') as handle:
             tokenizer = pickle.load(handle)
         self.tokenizer = tokenizer
 
         vocab_size = len(self.tokenizer.word_index) + 1
         self.model = LM_Model(vocab_size, look_back=1, batch_size=1).model
-        self.model.load_weights('./model/best_weights.hdf5')
+        self.model.load_weights('../model/lm_inference_weights.hdf5')
 
 
     def sample_new_sequence(self, text_sample):
@@ -72,6 +72,7 @@ class sample_word:
         encoded_word = array([encoded_word])
 
         # predict the probabilities for each word
+        print(encoded_word.shape)
         prediction = self.model.predict([encoded_word], verbose=0)
         # Sample a word based on the probabilities of the words
         sampled_index = sample_index_from_distribution(prediction[0])
@@ -81,12 +82,14 @@ class sample_word:
         for word, index in self.tokenizer.word_index.items():
             if sampled_index == index:
                 sampled_word = word
+                print(sampled_word)
                 break
 
         return sampled_word
 
 if __name__ == '__main__':
     sampeler = sample_word()
+    #print(sampeler.tokenizer.word_index['pre-recorded'])
     word = 'AIDS Acquired Immune Deficiency Syndromeis a condition caused by a virus called HIV Human Immuno Deficiency Virus This virus affects'
     # Initialize a sampeling sequence
     next_word = sampeler.sample_new_sequence(word)
@@ -95,6 +98,7 @@ if __name__ == '__main__':
     sample_size = 100
     sampled_sentence = next_word
     for i in range(sample_size):
+        print('Next word: {}'.format(next_word))
         next_word = sampeler.sample_next_word(next_word)
         sampled_sentence += ' ' + next_word
     print(sampled_sentence)

@@ -7,11 +7,12 @@ from tensorflow.keras.layers import Embedding
 
 class LM_Model:
 
-    def __init__(self, vocab_size, look_back, batch_size, embedding=None):
+    def __init__(self, vocab_size, look_back, batch_size, embedding=None, use_embedding=False):
         self.vocab_size = vocab_size
         self.look_back = look_back
         # Pre trained embedding, word2vec, glove...
         self.embedding = embedding
+        self.use_embedding = use_embedding
 
         self.model = self.define_model(batch_size, self.look_back)
         # print(model.summary())
@@ -21,7 +22,7 @@ class LM_Model:
     def define_model(self, batch_size, look_back, state_full=False):
         # Create the LM model
         model = Sequential()
-        if self.embedding == None:
+        if self.use_embedding == False:
             # Add the embedding layer, init a uniform matrix with nr_words = vocab_size and each
             # word is encoded as a 10d vector, one word at a time will be inputted to the network
             model.add(Embedding(
@@ -31,19 +32,21 @@ class LM_Model:
                 batch_input_shape=(batch_size, look_back)
             ))
         else:
+            print(self.embedding.shape[0])
+            print(self.embedding.shape[1])
             model.add(Embedding(
                 input_dim=self.embedding.shape[0],  # vocabulary size, e.g, 10 if you have 10 words in your vocabulary
                 output_dim=self.embedding.shape[1],  # size of the embedded vectors
-                weights=self.embedding, # the pre trained word embedding
+                weights=[self.embedding], # the pre trained word embedding
                 input_length=look_back,
                 trainable=False, # Freezes the layer so that the embedding does not get changed during back prop
                 batch_input_shape=(batch_size, look_back)
             ))
 
         # The output from the lstm is a 50 dim vector, return_sequences=True is needed so that the next layer in the LSTM will get its input
-        model.add(CuDNNLSTM(50, stateful=state_full, return_sequences=True))
+        model.add(LSTM(50, stateful=state_full, return_sequences=True))
         # Another LSTM layer
-        model.add(CuDNNLSTM(50, stateful=state_full))
+        model.add(LSTM(50, stateful=state_full))
         # A final dense layer with softmax activation to transform the output from LSTM to one hot rep for each word
         model.add(Dense(self.vocab_size, activation='softmax'))
 
