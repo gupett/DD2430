@@ -15,15 +15,19 @@ def largest(X, K):
     return (K - (K % X))
 
 # Learning rate scheduler for decay rate 0.5 for all consecutive epochs after first 4 epochsself.
+# we train the language models (both the baseline and Affect-LM ) on the training split
+# for 13 epochs, with a learning rate of 1.0 for the
+# first four epochs, and the rate decreasing by a factor of 2 after every subsequent epoch.
+# The learning rate and neural architecture are the same for all models.
 def step_decay(epoch):
     initial_lrate = 1.0
-        drop = 0.5
-        epochs_drop = 4.0
+    drop = 0.0
+    epochs_drop = 4.0
     if epoch > 4:
         epochs_drop = 1
-        lrate = initial_lrate * \
-            np.pow(drop, np.floor((1 + epoch) / epochs_drop))
-        return lrate
+        drop = 0.5;
+    lrate = initial_lrate * np.pow(drop, np.floor((1 + epoch) / epochs_drop))
+    return lrate
 
 
 class Training:
@@ -97,12 +101,14 @@ class Training:
         checkpoint = ModelCheckpoint(
             file_path, monitor='loss', verbose=1, save_best_only=True, mode='min')
 
-        # learning schedule callback
+        # Custom learning schedule callback
         lrate = LearningRateScheduler(step_decay)
         callbacks = [checkpoint, lrate];
 
 
         # Compile model
+        # Use default settings for adam, but with no specified learning rate and decay
+        # Use custom made learning rate scheduler
         adam = Adam(lr=0, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
         self.model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
