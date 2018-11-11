@@ -6,7 +6,7 @@ import json
 from os import listdir
 from os.path import isfile, join
 
-FILE_EXTENSION = './treat-data/parts/'
+FILE_EXTENSION = './Data/parts/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name))]
 
 
@@ -24,6 +24,7 @@ class generate_training_data:
         # Init a tokenizer which will translate words in to integers
         self.tokenizer = Tokenizer()
         self.tokenizer.fit_on_texts([self.unique_words])
+        print(self.tokenizer.word_index)
         # Vocabulary size
         self.vocab_size = len(self.tokenizer.word_index) + 1
 
@@ -52,6 +53,7 @@ class generate_training_data:
             return list(unique_words)
     '''
 
+    '''
     # Gets the unique words from the json file
     def get_file_content(self):
         file_path = './treat-data/BNC/training_files/A.txt'
@@ -70,12 +72,13 @@ class generate_training_data:
         return string_data
     
     '''
+
+
     # Gets the unique words from the json file
     def get_unique_words_from_json_file(self):
-        file_path = './treat-data/BNC/training_files/unique_words.txt'
+        file_path = './treat-data/BNC/small-example/unique_words.txt'
         string_data = open(file_path).read()
         return string_data
-    '''
 
     # Create training batches from a full file
     def read_file_for_training_data(self, file_path):

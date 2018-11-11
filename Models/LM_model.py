@@ -45,8 +45,10 @@ class LM_Model:
 
         # The output from the lstm is a 50 dim vector, return_sequences=True is needed so that the next layer in the LSTM will get its input
         model.add(CuDNNLSTM(50, stateful=state_full, return_sequences=True))
+        #model.add(LSTM(50, stateful=state_full, return_sequences=True))
         # Another LSTM layer
         model.add(CuDNNLSTM(50, stateful=state_full))
+        #model.add(LSTM(50, stateful=state_full))
         # A final dense layer with softmax activation to transform the output from LSTM to one hot rep for each word
         model.add(Dense(self.vocab_size, activation='softmax'))
 

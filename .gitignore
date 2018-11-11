@@ -6,3 +6,7 @@ Models/__pycache__
 Training/__pycache__
 Word_embedding/*
 treat-data
+Data/Data
+nohup.out
+.nohup.out.swp
+logs
