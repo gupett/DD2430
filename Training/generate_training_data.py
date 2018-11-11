@@ -3,9 +3,14 @@ from tensorflow.keras.utils import to_categorical
 import numpy as np
 import json
 
+from os import listdir
+from os.path import isfile, join
 
-FILES = ['A00.txt', 'A01.txt']
-FILE_EXTENSION = './treat-data/BNC/small-example/'
+FILE_EXTENSION = './treat-data/parts/'
+FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name))]
+
+
+
 
 class generate_training_data:
 
@@ -15,6 +20,7 @@ class generate_training_data:
 
         # Get all the unique words for every file in the training data set
         self.unique_words = self.get_unique_words_from_json_file()
+        #self.unique_words = self.get_file_content()
         # Init a tokenizer which will translate words in to integers
         self.tokenizer = Tokenizer()
         self.tokenizer.fit_on_texts([self.unique_words])
@@ -47,6 +53,12 @@ class generate_training_data:
     '''
 
     # Gets the unique words from the json file
+    def get_file_content(self):
+        file_path = './treat-data/BNC/training_files/A.txt'
+        string_data = open(file_path).read()
+        return string_data
+
+    # Gets the unique words from the json file
     def get_unique_words_from_json_file(self):
         file_path = './treat-data/BNC/small-example/unique_words.json'
         json_data = open(file_path).read()
@@ -56,11 +68,18 @@ class generate_training_data:
             string_data += s + ' '
         #print(data)
         return string_data
+    
+    '''
+    # Gets the unique words from the json file
+    def get_unique_words_from_json_file(self):
+        file_path = './treat-data/BNC/training_files/unique_words.txt'
+        string_data = open(file_path).read()
+        return string_data
+    '''
 
     # Create training batches from a full file
     def read_file_for_training_data(self, file_path):
         #text_file = './treat-data/BNC/small-example/A00.txt'
-        file_path = FILE_EXTENSION + file_path
         with open(file_path) as file:
             file_content = file.read()
 

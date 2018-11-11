@@ -31,13 +31,13 @@ class sample_word:
     def __init__(self):
 
         # Load the tokenizer from file
-        with open('../model/tokenizer/tokenizer.pickle', 'rb') as handle:
+        with open('./model/tokenizer/tokenizer.pickle', 'rb') as handle:
             tokenizer = pickle.load(handle)
         self.tokenizer = tokenizer
 
         vocab_size = len(self.tokenizer.word_index) + 1
         self.model = LM_Model(vocab_size, look_back=1, batch_size=1).model
-        self.model.load_weights('../model/lm_inference_weights.hdf5')
+        self.model.load_weights('./model/best_weights.hdf5')
 
 
     def sample_new_sequence(self, text_sample):

@@ -7,7 +7,7 @@ from Models.base_line_LM_model import base_line_lm_model
 from Models.LM_model import LM_Model
 
 SLIDING_WINDOW_SIZE = 20
-BATCH_SIZE = 4
+BATCH_SIZE = 20
 USE_EMBEDDING = True
 MODEL = 'base_LM_Model'
 MODEL = 'LM_Model'
@@ -127,6 +127,11 @@ class Training:
         #self.model.fit(trainingX, trainingY, epochs=epochs, batch_size=BATCH_SIZE, callbacks=callbacks, verbose=0)
         epochs = self.traning_generator.nr_batch_files * epochs
         for i in range(epochs):
+            
+            if i%self.traning_generator.nr_batch_files == 0:
+                print('A NEW EPOCH IS STARTING NOW NR: {}'.format(i/self.traning_generator.nr_batch_files))
+            else:
+                print('ITERATION {} IN EPOCH'.format(i%self.traning_generator.nr_batch_files))
 
             X, y = self.traning_generator.get_next_batch()
             if MODEL == 'LM_Model':
@@ -137,23 +142,23 @@ class Training:
             epoch_history = self.model.fit(trainingX, trainingY, epochs=1, batch_size=BATCH_SIZE, verbose=2, shuffle=True, validation_data=(valX, valY))
 
             # Store history
-            model_history['loss'].append(epoch_history.history['loss'])
-            model_history['val_loss'].append(epoch_history.history['val_loss'])
-            model_history['acc'].append(epoch_history.history['acc'])
-            model_history['val_acc'].append(epoch_history.history['val_acc'])
+            #model_history['loss'].append(epoch_history.history['loss'])
+            #model_history['val_loss'].append(epoch_history.history['val_loss'])
+            #model_history['acc'].append(epoch_history.history['acc'])
+            #model_history['val_acc'].append(epoch_history.history['val_acc'])
 
             # Reset the memory cell and hidden node for each epoch, a new sequence will be started
             self.model.reset_states()
 
-            print(epoch_history.history['val_acc'])
+            #print(epoch_history.history['val_acc'])
             # Check if val acc has increased in such case save the model
-            if epoch_history.history['val_acc'][0] > val_acc:
+            #if epoch_history.history['val_acc'][0] > val_acc:
                 # Store model
-                self.model.save_weights('./model/best_weights.hdf5')
-                val_acc = epoch_history.history['val_acc']
+                #self.model.save_weights('./model/best_weights.hdf5')
+                #val_acc = epoch_history.history['val_acc']
                 # save training history for model
-                with open("./model/history/mode_history", "wb") as file_pi:
-                    pickle.dump(model_history, file_pi)
+                #with open("./model/history/mode_history", "wb") as file_pi:
+                #pickle.dump(model_history, file_pi)
 
         # Make sure that the model_weights with the best accuracy is stored
         if epoch_history.history['val_acc'][0] < val_acc:
@@ -175,4 +180,4 @@ class Training:
 
 if __name__ == '__main__':
     trainer = Training()
-    trainer.train(5)
+    trainer.train(3)
