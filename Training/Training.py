@@ -71,14 +71,14 @@ class Training:
         tensorboard = TensorBoard(log_dir="logs/{}".format(time()))
 
         # define early stopping callback
-        earlystop = EarlyStopping(monitor='loss', min_delta=0.0001, patience=5, verbose=1, mode='auto')
+        earlystop = EarlyStopping(monitor='loss', min_delta=0.0001, patience=5, verbose=0, mode='auto')
 
         #file_path = './model/weights-{epoch:02d}-{loss:.4f}.hdf5'
         file_path = './model/best_weights.hdf5'
-        checkpoint = ModelCheckpoint(file_path, monitor='loss', verbose=1, save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint(file_path, monitor='loss', verbose=0, save_best_only=True, mode='min')
         callbacks = [checkpoint, earlystop, tensorboard]
 
-        self.model.fit_generator(generator=self.traning_generator.batch_generator(), steps_per_epoch=self.traning_generator.batch_per_epoch, epochs=epochs, verbose=1, callbacks=callbacks)
+        self.model.fit_generator(generator=self.traning_generator.batch_generator(), steps_per_epoch=self.traning_generator.batch_per_epoch, epochs=epochs, verbose=2, callbacks=callbacks)
 
         # Create new model with same weights but different batch size
         new_model = self.lm_model.redefine_model(self.model)
@@ -90,4 +90,4 @@ class Training:
 
 if __name__ == '__main__':
     trainer = Training()
-    trainer.train(3)
+    trainer.train(5)

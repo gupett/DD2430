@@ -6,7 +6,7 @@ import json
 from os import listdir
 from os.path import isfile, join
 
-FILE_EXTENSION = './Data/parts/'
+FILE_EXTENSION = './Data/parts_small/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name))]
 
 

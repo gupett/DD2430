@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 import numpy as np
 
-FILE_EXTENSION = './Data/Data/parts/'
+FILE_EXTENSION = './Data/Data/parts_small/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
 UNIQUE_WORD_FILE = './Data/Data/unique_words.json'
 
