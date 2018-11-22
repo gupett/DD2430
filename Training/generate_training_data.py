@@ -2,6 +2,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.utils import to_categorical
 import numpy as np
 import json
+import pickle
 
 from os import listdir
 from os.path import isfile, join
@@ -14,17 +15,26 @@ FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION
 
 class generate_training_data:
 
-    def __init__(self, sliding_window_size):
+    def __init__(self, sliding_window_size=20, train_existing=False):
         # variables for initializing the training data
         self.sliding_window_size = sliding_window_size
 
         # Get all the unique words for every file in the training data set
         self.unique_words = self.get_unique_words_from_json_file()
         #self.unique_words = self.get_file_content()
-        # Init a tokenizer which will translate words in to integers
-        self.tokenizer = Tokenizer()
-        self.tokenizer.fit_on_texts([self.unique_words])
-        print(self.tokenizer.word_index)
+
+        # In case training should continue for a model
+        if train_existing:
+            # Load the tokenizer from file
+            with open('../model/tokenizer/tokenizer.pickle', 'rb') as handle:
+                tokenizer = pickle.load(handle)
+            self.tokenizer = tokenizer
+
+        else:
+            # Init a tokenizer which will translate words in to integers
+            self.tokenizer = Tokenizer()
+            self.tokenizer.fit_on_texts([self.unique_words])
+            #print(self.tokenizer.word_index)
         # Vocabulary size
         self.vocab_size = len(self.tokenizer.word_index) + 1
 

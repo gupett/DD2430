@@ -7,19 +7,19 @@ from tensorflow.keras.layers import Embedding
 
 class LM_Model:
 
-    def __init__(self, vocab_size, look_back, batch_size, embedding=None, use_embedding=False):
+    def __init__(self, vocab_size, look_back, batch_size, embedding=None, use_embedding=False, stateful=False):
         self.vocab_size = vocab_size
         self.look_back = look_back
         # Pre trained embedding, word2vec, glove...
         self.embedding = embedding
         self.use_embedding = use_embedding
 
-        self.model = self.define_model(batch_size, self.look_back)
+        self.model = self.define_model(batch_size, self.look_back, stateful)
         # print(model.summary())
         # Now the model is evaluated based on accuracy/ should it be evaluated based on loss?
         self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-    def define_model(self, batch_size, look_back, state_full=False):
+    def define_model(self, batch_size, look_back, state_full):
         # Create the LM model
         model = Sequential()
         if self.use_embedding == False:

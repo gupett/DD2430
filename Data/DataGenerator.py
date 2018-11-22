@@ -4,6 +4,8 @@ from tensorflow.keras.utils import to_categorical
 from os import listdir
 from os.path import isfile, join
 import numpy as np
+import gc
+import pickle
 
 FILE_EXTENSION = './Data/Data/parts_small/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
@@ -16,16 +18,23 @@ def largest(X, K):
 
 class dataGenerator(keras.utils.Sequence):
 
-    def __init__(self, batch_size=20, sliding_window_size=20, shuffle=False, Affect_LM=False):
+    def __init__(self, batch_size=20, sliding_window_size=20, shuffle=False, Affect_LM=False, train_existing=False):
         self.batch_size = batch_size
         self.sliding_window_size = sliding_window_size
         self.shuffle = shuffle
 
         # Get all the unique words for every file in the training data set
         self.unique_words = self.get_unique_words_from_json_file()
-        # Init a tokenizer which will translate words in to integers
-        self.tokenizer = Tokenizer()
-        self.tokenizer.fit_on_texts([self.unique_words])
+
+        if train_existing:
+            # Load the tokenizer from file
+            with open('../model/tokenizer/tokenizer.pickle', 'rb') as handle:
+                tokenizer = pickle.load(handle)
+            self.tokenizer = tokenizer
+        else:
+            # Init a tokenizer which will translate words in to integers
+            self.tokenizer = Tokenizer()
+            self.tokenizer.fit_on_texts([self.unique_words])
         # print(self.tokenizer.word_index)
         # Vocabulary size
         self.vocab_size = len(self.tokenizer.word_index) + 1
@@ -93,7 +102,9 @@ class dataGenerator(keras.utils.Sequence):
         X = np.array(sequences[:, 0:self.sliding_window_size])
         y = np.array(sequences[:, -1])
         y_b = y[0:largest(self.batch_size, y.shape[0])]
+        print('shape y: {}'.format(y_b.shape))
         X_b = X[0:largest(self.batch_size, X.shape[0])]
+        print('shape X: {}'.format(X_b.shape))
 
         return X_b, y_b
 
@@ -106,9 +117,11 @@ class dataGenerator(keras.utils.Sequence):
             if self.batch_in_file == self.x_file.shape[0]/self.batch_size:
                 self.sequence_for_file = self.load_next_sequence()
                 self.batch_in_file = 0
+                gc.collect()
 
             start = self.batch_in_file*self.batch_size
             x_batch = np.array(self.x_file[start:start+self.batch_size, :])
+            print('shape X: {}'.format(x_batch.shape))
             self.batch_in_file += 1
 
             y_batch = np.array(self.y_file[start:start+self.batch_size])
