@@ -10,3 +10,5 @@ Data/Data
 nohup.out
 .nohup.out.swp
 logs
+Inference/inference_input.txt
+Inference/inference_output.txt
