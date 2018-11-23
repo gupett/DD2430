@@ -10,7 +10,7 @@ from Data.analyse import affection_context
 
 FILE_EXTENSION = '../Data/Data/training/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
-UNIQUE_WORD_FILE = '../Data/Data/unique_words.json'
+UNIQUE_WORD_FILE = '../Data/Data/unique_words.txt'
 
 # Function for finding the largest number less than K+1 divisible by X
 def largest(X, K):
@@ -25,7 +25,8 @@ class dataGenerator(keras.utils.Sequence):
         self.shuffle = shuffle
 
         # Get all the unique words for every file in the training data set
-        self.unique_words = self.get_unique_words_from_json_file()
+        #self.unique_words = self.get_unique_words_from_json_file()
+        self.unique_words = self.get_unique_words_for_files()
 
         if existing_tokenizer:
             # Load the tokenizer from file
@@ -139,3 +140,15 @@ class dataGenerator(keras.utils.Sequence):
         file_path = UNIQUE_WORD_FILE
         string_data = open(file_path).read()
         return string_data
+
+        # Gets the unique words for all the files so that a tokenizer encoding can be generated for every word
+
+    def get_unique_words_for_files(self):
+        file_path = UNIQUE_WORD_FILE
+        with open(file_path) as file:
+            content = file.read()
+        content = content.replace('\n', ' ')
+
+        words = [word for word in content.split(' ') if len(word) > 0]
+
+        return words

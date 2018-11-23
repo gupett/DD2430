@@ -29,13 +29,15 @@ class Training:
 
         if MODEL == 'LM_Model':
             self.training_generator = DataGenerator.dataGenerator(sliding_window_size=SLIDING_WINDOW_SIZE, train_existing=USE_EXISTING_TOKENIZER)
+            self.tokenizer = self.training_generator.tokenizer
         else:
             self.training_generator = LMDataGemerator.dataGenerator(sliding_window_size=SLIDING_WINDOW_SIZE,
                                                                     existing_tokenizer=USE_EXISTING_TOKENIZER)
-            self.validation_generator = LMVaildationDataGenerator.validationDataGenerator(sliding_window_size=SLIDING_WINDOW_SIZE,
-                                                                                          existing_tokenizer=USE_EXISTING_TOKENIZER)
+
+            self.tokenizer = self.training_generator.tokenizer
+            self.validation_generator = LMVaildationDataGenerator.validationDataGenerator(tokenizer=self.tokenizer, sliding_window_size=SLIDING_WINDOW_SIZE)
+
         self.vocab_size = self.training_generator.vocab_size
-        self.tokenizer = self.training_generator.tokenizer
 
         #self.training_generator = generate_training_data(sliding_window_size=SLIDING_WINDOW_SIZE)
         # Extract and set up an embedding matrix from the pre-trained embedding
@@ -48,12 +50,12 @@ class Training:
             if TRAIN_EXISTING:
                 self.model.load_weights('./model/best_weights.hdf5')
         elif MODEL == 'base_LM_Model':
-            bias_vector = self.get_bias_vector()
-            self.lm_model = base_line_lm_model(self.vocab_size, BATCH_SIZE, SLIDING_WINDOW_SIZE, embedding=self.embedding_matrix, bias_vector=bias_vector, use_embedding=pre_trained_embedding)
+            self.bias_vector = self.get_bias_vector()
+            self.lm_model = base_line_lm_model(self.vocab_size, BATCH_SIZE, SLIDING_WINDOW_SIZE, embedding=self.embedding_matrix, bias_vector=self.bias_vector, use_embedding=pre_trained_embedding)
             self.model = self.lm_model.model
         elif MODEL == 'base_affect_LM_Model':
-            bias_vector = self.get_bias_vector()
-            self.lm_model = base_line_affect_lm_model(vocab_size=self.vocab_size, batch_size=BATCH_SIZE, look_back_steps=SLIDING_WINDOW_SIZE, embedding_matrix=self.embedding_matrix)
+            self.bias_vector = self.get_bias_vector()
+            self.lm_model = base_line_affect_lm_model(vocab_size=self.vocab_size, batch_size=BATCH_SIZE, look_back_steps=SLIDING_WINDOW_SIZE, embedding_matrix=self.embedding_matrix, bias_vector=self.bias_vector)
             self.model = self.lm_model.model
 
     def get_embedding_matrix(self):
@@ -82,7 +84,29 @@ class Training:
         return embedding_matrix
 
     def get_bias_vector(self):
+
+        with open('../Data/Data/unigrams_wo.txt') as file:
+            content = file.read()
+            content = content.lower()
+
+        content = content.replace('\n', ' ')
+        content = content.replace('\t', ' ')
+        unigram = []
+        words = []
+
+        for index, value in enumerate(content.split(' ')):
+            if index%2 == 0:
+                words.append(value)
+            elif index%2 == 1:
+                unigram.append(value)
+
+        words_unigram = zip(words, unigram)
+
+        #print(words_bigram[1:5])
         bias = np.zeros((self.vocab_size,))
+        for word, unigram in words_unigram:
+            index = self.tokenizer.word_index[word]
+            bias[index] = unigram
         return bias
 
 
@@ -104,8 +128,8 @@ class Training:
                                  validation_steps=self.validation_generator.batch_per_epoch)
 
         # Create new model with same weights but different batch size
-        #new_model = self.lm_model.redefine_model(self.model)
-        #new_model.save_weights('../model/lm_inference_weights.hdf5')
+        new_model = self.lm_model.redefine_model(self.model)
+        new_model.save_weights('../model/lm_inference_weights.hdf5')
 
         # Save the tokenizer to file for use at inference time
         with open('../model/tokenizer/tokenizer.pickle', 'wb') as handle:
@@ -113,4 +137,25 @@ class Training:
 
 if __name__ == '__main__':
     trainer = Training()
-    trainer.train(30)
+    tokenizer = trainer.tokenizer
+    embedding = trainer.embedding_matrix
+    bias = trainer.bias_vector
+
+    test_words = ['the', 'to', 'of', 'and', 'for', 'it', 'by']
+
+    for word in test_words:
+        index = tokenizer.word_index[word]
+        print('The bias for the word: {}'.format(word))
+        print(bias[index])
+
+    '''
+    test_words = ['the', 'to', 'of', 'and', 'for', 'it', 'by']
+
+    for word in test_words:
+        index = tokenizer.word_index[word]
+        en = embedding[index]
+        print('The embedding for the word: {} is'.format(word))
+        print(en[0:10])
+
+    '''
+    trainer.train(1)

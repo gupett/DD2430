@@ -10,7 +10,7 @@ from Data.analyse import affection_context
 
 FILE_EXTENSION = '../Data/Data/validation/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
-UNIQUE_WORD_FILE = '../Data/Data/unique_words.json'
+#UNIQUE_WORD_FILE = '../Data/Data/unique_words.json'
 
 # Function for finding the largest number less than K+1 divisible by X
 def largest(X, K):
@@ -19,23 +19,14 @@ def largest(X, K):
 
 class validationDataGenerator(keras.utils.Sequence):
 
-    def __init__(self, batch_size=20, sliding_window_size=20, shuffle=False, Affect_LM=False, existing_tokenizer=False):
+    def __init__(self, tokenizer, batch_size=20, sliding_window_size=20, shuffle=False):
         self.batch_size = batch_size
         self.sliding_window_size = sliding_window_size
         self.shuffle = shuffle
 
-        # Get all the unique words for every file in the training data set
-        self.unique_words = self.get_unique_words_from_json_file()
+        # Use existing tokenizer created for training
+        self.tokenizer = tokenizer
 
-        if existing_tokenizer:
-            # Load the tokenizer from file
-            with open('../model/tokenizer/tokenizer.pickle', 'rb') as handle:
-                tokenizer = pickle.load(handle)
-            self.tokenizer = tokenizer
-        else:
-            # Init a tokenizer which will translate words in to integers
-            self.tokenizer = Tokenizer()
-            self.tokenizer.fit_on_texts([self.unique_words])
         # Reversed tokenizer for going from index go word
         self.reverse_word_map = dict(map(reversed, self.tokenizer.word_index.items()))
         # Vocabulary size
@@ -133,9 +124,3 @@ class validationDataGenerator(keras.utils.Sequence):
             #yield {'word_input': x_batch, 'affect_input': affect_batch}, y_batch
             yield {'input_1': x_batch, 'input_2': affect_batch}, y_batch
             #yield x_batch, y_batch
-
-    # Gets the unique words from the json file
-    def get_unique_words_from_json_file(self):
-        file_path = UNIQUE_WORD_FILE
-        string_data = open(file_path).read()
-        return string_data
