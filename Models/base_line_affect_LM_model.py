@@ -1,5 +1,5 @@
 from tensorflow.keras import models
-from tensorflow.keras.layers import Dense, LSTM, Input, Add, Lambda
+from tensorflow.keras.layers import Dense, LSTM, Input, Add, Lambda, CuDNNLSTM
 from tensorflow.keras.activations import sigmoid
 import numpy as np
 
@@ -27,8 +27,8 @@ class base_line_affect_lm_model:
         else:
             word_input = Input((look_back_steps, 1))
         # The output vector from the LSTM layer is 200d and return_sequences=True must be set in order to use
-        lstm_layer1 = LSTM(100, return_sequences=True, stateful=state_ful)(word_input)
-        lstm_layer2 = LSTM(100, stateful=state_ful)(lstm_layer1)
+        lstm_layer1 = CuDNNLSTM(100, return_sequences=True, stateful=state_ful)(word_input)
+        lstm_layer2 = CuDNNLSTM(100, stateful=state_ful)(lstm_layer1)
         # Set the weights to the weights corresponding to the embedding
         dense_word_decoder = Dense(self.vocab_size)(lstm_layer2)
 
