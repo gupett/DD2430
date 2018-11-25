@@ -11,7 +11,7 @@ class affection_context:
 
 	def create_affect_model(self):
 		# skapa en model
-		fh = open('../Data/NRC-Emotion-Lexicon-Wordlevel-v0.92.txt', 'r')
+		fh = open('./Data/NRC-Emotion-Lexicon-Wordlevel-v0.92.txt', 'r')
 		lines = fh.readlines()
 		fh.close()
 		l = {}
@@ -37,7 +37,7 @@ class affection_context:
 			return 0
 
 	def affection_for_context(self, context):
-		result = {'anger':0, 'anticipation':0, 'fear':0, 'negative':0, 'positive':0}
+		result = {'anger':0, 'sadness':0, 'fear':0, 'negative':0, 'positive':0}
 		for word in context:
 			affection = self.analyse_word(word)
 			if affection != 0:

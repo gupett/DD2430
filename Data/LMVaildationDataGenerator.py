@@ -8,9 +8,9 @@ import gc
 import pickle
 from Data.analyse import affection_context
 
-FILE_EXTENSION = '../Data/Data/validation/'
+FILE_EXTENSION = './Data/Data/validation/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
-#UNIQUE_WORD_FILE = '../Data/Data/unique_words.json'
+#UNIQUE_WORD_FILE = './Data/Data/unique_words.json'
 
 # Function for finding the largest number less than K+1 divisible by X
 def largest(X, K):

@@ -61,7 +61,7 @@ class Training:
     def get_embedding_matrix(self):
         # load the entire embedding from file into a dictionary
         embeddings_index = dict()
-        f = open('../Word_embedding/glove.6B.100d.txt')
+        f = open('./Word_embedding/glove.6B.100d.txt')
         for line in f:
             # splits on spaces
             values = line.split()
@@ -85,7 +85,7 @@ class Training:
 
     def get_bias_vector(self):
 
-        with open('../Data/Data/unigrams_wo.txt') as file:
+        with open('./Data/Data/unigrams_wo.txt') as file:
             content = file.read()
             content = content.lower()
 
@@ -111,32 +111,33 @@ class Training:
 
 
     def train(self, epochs):
+        
+        # Save the tokenizer to file for use at inference time
+        with open('./model/tokenizer/tokenizer.pickle', 'wb') as handle:
+            pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         # define a tensorboard callback
         tensorboard = TensorBoard(log_dir="logs/{}".format(time()))
 
         # define early stopping callback
-        earlystop = EarlyStopping(monitor='loss', min_delta=0.0001, patience=5, verbose=0, mode='auto')
+        earlystop = EarlyStopping(monitor='loss', min_delta=0.0001, patience=25, verbose=0, mode='auto')
 
         #file_path = './model/weights-{epoch:02d}-{loss:.4f}.hdf5'
-        file_path = '../model/best_weights.hdf5'
+        file_path = './model/best_weights.hdf5'
         checkpoint = ModelCheckpoint(file_path, monitor='loss', verbose=0, save_best_only=True, mode='min')
         callbacks = [checkpoint, earlystop, tensorboard]
 
         self.model.fit_generator(generator=self.training_generator.batch_generator(), steps_per_epoch=self.training_generator.batch_per_epoch,
-                                 epochs=epochs, verbose=1, callbacks=callbacks, validation_data=self.validation_generator.batch_generator(),
+                                 epochs=epochs, verbose=2, callbacks=callbacks, validation_data=self.validation_generator.batch_generator(),
                                  validation_steps=self.validation_generator.batch_per_epoch)
 
         # Create new model with same weights but different batch size
         new_model = self.lm_model.redefine_model(self.model)
-        new_model.save_weights('../model/lm_inference_weights.hdf5')
-
-        # Save the tokenizer to file for use at inference time
-        with open('../model/tokenizer/tokenizer.pickle', 'wb') as handle:
-            pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        new_model.save_weights('./model/lm_inference_weights.hdf5')
 
 if __name__ == '__main__':
     trainer = Training()
+    '''
     tokenizer = trainer.tokenizer
     embedding = trainer.embedding_matrix
     bias = trainer.bias_vector
@@ -147,6 +148,7 @@ if __name__ == '__main__':
         index = tokenizer.word_index[word]
         print('The bias for the word: {}'.format(word))
         print(bias[index])
+    '''
 
     '''
     test_words = ['the', 'to', 'of', 'and', 'for', 'it', 'by']
@@ -158,4 +160,4 @@ if __name__ == '__main__':
         print(en[0:10])
 
     '''
-    trainer.train(1)
+    trainer.train(10)

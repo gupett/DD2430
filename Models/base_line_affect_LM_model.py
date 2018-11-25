@@ -33,7 +33,7 @@ class base_line_affect_lm_model:
         dense_word_decoder = Dense(self.vocab_size)(lstm_layer2)
 
 
-        print('Embedding matrix shape: {}'.format(self.embedding.shape))
+        #print('Embedding matrix shape: {}'.format(self.embedding.shape))
 
 
         # The energy term for affect words
@@ -45,7 +45,7 @@ class base_line_affect_lm_model:
         dense_affect_decoder_1 = Dense(self.vocab_size, trainable=False, name='embedding_layer')(dense_2)
         # multiply the affect vector with the beta energy term
         #beta = Input((1,))
-        beta = 1
+        beta = 1.75
         dense_affect_decoder = Lambda(lambda x: x*beta)(dense_affect_decoder_1)
 
         # the bias term for unigram occurrences has not been added to the model
@@ -55,10 +55,10 @@ class base_line_affect_lm_model:
 
         weights = model.get_layer('embedding_layer').get_weights()
 
-        print(weights[1].shape)
+        #print(weights[1].shape)
         weights[0] = self.embedding
         weights[1] = self.bias_vector
-        print(weights)
+        #print(weights)
         model.get_layer('embedding_layer').set_weights(weights)
 
         self.start_weights.append(weights[0])

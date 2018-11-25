@@ -8,9 +8,9 @@ import gc
 import pickle
 from Data.analyse import affection_context
 
-FILE_EXTENSION = '../Data/Data/training/'
+FILE_EXTENSION = './Data/Data/training/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
-UNIQUE_WORD_FILE = '../Data/Data/unique_words.txt'
+UNIQUE_WORD_FILE = './Data/Data/unique_words.txt'
 
 # Function for finding the largest number less than K+1 divisible by X
 def largest(X, K):
@@ -30,7 +30,7 @@ class dataGenerator(keras.utils.Sequence):
 
         if existing_tokenizer:
             # Load the tokenizer from file
-            with open('../model/tokenizer/tokenizer.pickle', 'rb') as handle:
+            with open('./model/tokenizer/tokenizer.pickle', 'rb') as handle:
                 tokenizer = pickle.load(handle)
             self.tokenizer = tokenizer
         else:
@@ -82,6 +82,7 @@ class dataGenerator(keras.utils.Sequence):
 
     def load_next_sequence(self):
         self.current_file_nr = (self.current_file_nr + 1) % len(FILES)
+        print('Current file is: {}'.format(self.current_file_nr))
         file_path = FILES[self.current_file_nr]
         with open(file_path) as file:
             file_content = file.read()
