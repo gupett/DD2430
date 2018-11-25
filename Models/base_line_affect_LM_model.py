@@ -1,5 +1,5 @@
 from tensorflow.keras import models
-from tensorflow.keras.layers import Dense, LSTM, Input, Add, Lambda, CuDNNLSTM
+from tensorflow.keras.layers import Dense, LSTM, Input, Add, Lambda, CuDNNLSTM, Softmax
 from tensorflow.keras.activations import sigmoid
 import numpy as np
 
@@ -27,10 +27,12 @@ class base_line_affect_lm_model:
         else:
             word_input = Input((look_back_steps, 1))
         # The output vector from the LSTM layer is 200d and return_sequences=True must be set in order to use
-        lstm_layer1 = CuDNNLSTM(100, return_sequences=True, stateful=state_ful)(word_input)
-        lstm_layer2 = CuDNNLSTM(100, stateful=state_ful)(lstm_layer1)
+        #lstm_layer1 = CuDNNLSTM(100, return_sequences=True, stateful=state_ful)(word_input)
+        #lstm_layer2 = CuDNNLSTM(100, stateful=state_ful)(lstm_layer1)
+        lstm_layer1 = LSTM(100, return_sequences=True, stateful=state_ful)(word_input)
+        lstm_layer2 = LSTM(100, stateful=state_ful)(lstm_layer1)
         # Set the weights to the weights corresponding to the embedding
-        dense_word_decoder = Dense(self.vocab_size)(lstm_layer2)
+        dense_word_decoder = Dense(self.vocab_size, trainable=False, name='embedding_layer')(lstm_layer2)
 
 
         #print('Embedding matrix shape: {}'.format(self.embedding.shape))
@@ -42,16 +44,16 @@ class base_line_affect_lm_model:
         dense_1 = Dense(50, activation=sigmoid)(affect_input)
         dense_2 = Dense(100, activation=sigmoid)(dense_1)
         # The report does not say anything about the activation function for the second layer
-        dense_affect_decoder_1 = Dense(self.vocab_size, trainable=False, name='embedding_layer')(dense_2)
+        dense_affect_decoder_1 = Dense(self.vocab_size)(dense_2)
         # multiply the affect vector with the beta energy term
-        #beta = Input((1,))
         beta = 1.75
         dense_affect_decoder = Lambda(lambda x: x*beta)(dense_affect_decoder_1)
 
         # the bias term for unigram occurrences has not been added to the model
         final_layer = Add()([dense_word_decoder, dense_affect_decoder])
+        prediction_layer = Softmax()(final_layer)
 
-        model = models.Model(inputs=[word_input, affect_input], outputs=[final_layer])
+        model = models.Model(inputs=[word_input, affect_input], outputs=[prediction_layer])
 
         weights = model.get_layer('embedding_layer').get_weights()
 
