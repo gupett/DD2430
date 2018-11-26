@@ -124,13 +124,17 @@ class dataGenerator(keras.utils.Sequence):
             x_batch = np.array(self.x_file[start:start+self.batch_size, :])
             #print('x_batch size 1: {}'.format(x_batch.shape))
             affect_batch = self.affect_for_batch(x_batch)
+            x_batch = keras.utils.to_categorical(x_batch, num_classes=self.vocab_size)
+            #print('x_batch size 2: {}'.format(x_batch.shape))
             # Reshaping for LSTM layer input
-            x_batch = x_batch.reshape(x_batch.shape[0], self.sliding_window_size, 1)
-            #print('x_batch size: {}'.format(x_batch.shape))
+            #x_batch = x_batch.reshape(x_batch.shape[0], self.sliding_window_size, 1)
+
             self.batch_in_file += 1
 
             y_batch = np.array(self.y_file[start:start+self.batch_size])
+            #print('y_batch size 1: {}'.format(y_batch.shape))
             y_batch = to_categorical(y_batch, num_classes=self.vocab_size)
+            #print('y_batch size 2: {}'.format(y_batch.shape))
 
             #yield {'word_input': x_batch, 'affect_input': affect_batch}, y_batch
             yield {'input_1': x_batch, 'input_2': affect_batch}, y_batch

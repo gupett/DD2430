@@ -23,14 +23,14 @@ class base_line_affect_lm_model:
         # The base LM model
         # batch_input_shape=(batch_size, timesteps, data_dim)
         if state_ful:
-            word_input = Input((look_back_steps, 1), batch_size=batch_size)
+            word_input = Input((look_back_steps, self.vocab_size), batch_size=batch_size)
         else:
-            word_input = Input((look_back_steps, 1))
+            word_input = Input((look_back_steps, self.vocab_size))
         # The output vector from the LSTM layer is 200d and return_sequences=True must be set in order to use
-        lstm_layer1 = CuDNNLSTM(100, return_sequences=True, stateful=state_ful)(word_input)
-        lstm_layer2 = CuDNNLSTM(100, stateful=state_ful)(lstm_layer1)
-        #lstm_layer1 = LSTM(100, return_sequences=True, stateful=state_ful)(word_input)
-        #lstm_layer2 = LSTM(100, stateful=state_ful)(lstm_layer1)
+        #lstm_layer1 = CuDNNLSTM(100, return_sequences=True, stateful=state_ful)(word_input)
+        #lstm_layer2 = CuDNNLSTM(100, stateful=state_ful)(lstm_layer1)
+        lstm_layer1 = LSTM(100, return_sequences=True, stateful=state_ful)(word_input)
+        lstm_layer2 = LSTM(100, stateful=state_ful)(lstm_layer1)
         # Set the weights to the weights corresponding to the embedding
         dense_word_decoder = Dense(self.vocab_size, trainable=False, name='embedding_layer')(lstm_layer2)
 

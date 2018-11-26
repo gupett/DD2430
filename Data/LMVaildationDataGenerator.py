@@ -113,8 +113,9 @@ class validationDataGenerator(keras.utils.Sequence):
             x_batch = np.array(self.x_file[start:start+self.batch_size, :])
             #print('x_batch size 1: {}'.format(x_batch.shape))
             affect_batch = self.affect_for_batch(x_batch)
+            x_batch = keras.utils.to_categorical(x_batch, num_classes=self.vocab_size)
             # Reshaping for LSTM layer input
-            x_batch = x_batch.reshape(x_batch.shape[0], self.sliding_window_size, 1)
+            #x_batch = x_batch.reshape(x_batch.shape[0], self.sliding_window_size, 1)
             #print('x_batch size: {}'.format(x_batch.shape))
             self.batch_in_file += 1
 

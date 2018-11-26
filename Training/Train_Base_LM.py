@@ -128,7 +128,7 @@ class Training:
         callbacks = [checkpoint, earlystop, tensorboard]
 
         self.model.fit_generator(generator=self.training_generator.batch_generator(), steps_per_epoch=self.training_generator.batch_per_epoch,
-                                 epochs=epochs, verbose=2, callbacks=callbacks, validation_data=self.validation_generator.batch_generator(),
+                                 epochs=epochs, verbose=1, callbacks=callbacks, validation_data=self.validation_generator.batch_generator(),
                                  validation_steps=self.validation_generator.batch_per_epoch)
 
         # Create new model with same weights but different batch size
