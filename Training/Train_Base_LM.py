@@ -160,4 +160,4 @@ if __name__ == '__main__':
         print(en[0:10])
 
     '''
-    trainer.train(2)
+    trainer.train(10)
