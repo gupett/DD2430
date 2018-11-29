@@ -5,7 +5,7 @@ import numpy as np
 
 class base_line_affect_lm_model:
 
-    def __init__(self, vocab_size, batch_size, look_back_steps, embedding_matrix, bias_vector):
+    def __init__(self, vocab_size, batch_size, look_back_steps, embedding_matrix=None, bias_vector=None):
         self.vocab_size = vocab_size
         self.batch_size = batch_size
         self.look_back_steps = look_back_steps
@@ -27,10 +27,10 @@ class base_line_affect_lm_model:
         else:
             word_input = Input((look_back_steps, self.vocab_size))
         # The output vector from the LSTM layer is 200d and return_sequences=True must be set in order to use
-        lstm_layer1 = CuDNNLSTM(100, return_sequences=True, stateful=state_ful)(word_input)
-        lstm_layer2 = CuDNNLSTM(100, stateful=state_ful)(lstm_layer1)
-        #lstm_layer1 = LSTM(100, return_sequences=True, stateful=state_ful)(word_input)
-        #lstm_layer2 = LSTM(100, stateful=state_ful)(lstm_layer1)
+        #lstm_layer1 = CuDNNLSTM(100, return_sequences=True, stateful=state_ful)(word_input)
+        #lstm_layer2 = CuDNNLSTM(100, stateful=state_ful)(lstm_layer1)
+        lstm_layer1 = LSTM(100, return_sequences=True, stateful=state_ful)(word_input)
+        lstm_layer2 = LSTM(100, stateful=state_ful)(lstm_layer1)
         # Set the weights to the weights corresponding to the embedding
         dense_word_decoder = Dense(self.vocab_size, trainable=False, name='embedding_layer')(lstm_layer2)
 
@@ -55,16 +55,17 @@ class base_line_affect_lm_model:
 
         model = models.Model(inputs=[word_input, affect_input], outputs=[prediction_layer])
 
-        weights = model.get_layer('embedding_layer').get_weights()
+        if self.embedding == None:
+            weights = model.get_layer('embedding_layer').get_weights()
 
-        #print(weights[1].shape)
-        weights[0] = self.embedding
-        weights[1] = self.bias_vector
-        #print(weights)
-        model.get_layer('embedding_layer').set_weights(weights)
+            #print(weights[1].shape)
+            weights[0] = self.embedding
+            weights[1] = self.bias_vector
+            #print(weights)
+            model.get_layer('embedding_layer').set_weights(weights)
 
-        self.start_weights.append(weights[0])
-        self.start_weights.append(weights[1])
+            self.start_weights.append(weights[0])
+            self.start_weights.append(weights[1])
 
         model.summary()
 
