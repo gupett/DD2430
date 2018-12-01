@@ -13,3 +13,4 @@ nohup.out
 logs
 Inference/inference_input.txt
 Inference/inference_output.txt
+__pycache__/
