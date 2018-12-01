@@ -14,7 +14,6 @@ def largest(X, K):
     # returning ans
     return (K - (K % X))
 
-# Learning rate scheduler for decay rate 0.5 for all consecutive epochs after first 4 epochsself.
 # we train the language models (both the baseline and Affect-LM ) on the training split
 # for 13 epochs, with a learning rate of 1.0 for the
 # first four epochs, and the rate decreasing by a factor of 2 after every subsequent epoch.
