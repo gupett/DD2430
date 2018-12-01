@@ -9,12 +9,16 @@ import pickle
 from Data.analyse import affection_context
 
 FILE_EXTENSION = './Data/Data/validation/'
-FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
+FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(
+    FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
 
 # Function for finding the largest number less than K+1 divisible by X
+
+
 def largest(X, K):
     # returning ans
     return (K - (K % X))
+
 
 class validationDataGenerator(keras.utils.Sequence):
 
@@ -27,7 +31,8 @@ class validationDataGenerator(keras.utils.Sequence):
         self.tokenizer = tokenizer
 
         # Reversed tokenizer for going from index go word
-        self.reverse_word_map = dict(map(reversed, self.tokenizer.word_index.items()))
+        self.reverse_word_map = dict(
+            map(reversed, self.tokenizer.word_index.items()))
         # Vocabulary size
         self.vocab_size = len(self.tokenizer.word_index) + 1
 
@@ -44,7 +49,7 @@ class validationDataGenerator(keras.utils.Sequence):
     def nr_batch_per_epoch(self):
         batch_per_epoch = 0
         for file_path in FILES:
-            #print(file_path)
+            # print(file_path)
             with open(file_path) as file:
                 file_content = file.read()
 
@@ -52,10 +57,12 @@ class validationDataGenerator(keras.utils.Sequence):
             file_content = file_content.replace('\n', ' ')
 
             # Get an encoding of the text
-            file_encoded_sequence = self.tokenizer.texts_to_sequences([file_content])[0]
+            file_encoded_sequence = self.tokenizer.texts_to_sequences([file_content])[
+                0]
 
             # the // operator gives int values
-            batch_per_epoch += ((len(file_encoded_sequence)-(self.sliding_window_size+1))//(self.batch_size))
+            batch_per_epoch += ((len(file_encoded_sequence) -
+                                 (self.sliding_window_size + 1)) // (self.batch_size))
         return batch_per_epoch
 
     def affect_for_batch(self, x_batch):
@@ -64,7 +71,8 @@ class validationDataGenerator(keras.utils.Sequence):
             context = []
             for index in row:
                 context.append(self.reverse_word_map[index])
-            affect_batch[i,:] = self.affect_context.binary_affection_vector_for_context(context)
+            affect_batch[i, :] = self.affect_context.binary_affection_vector_for_context(
+                context)
 
         return affect_batch
 
@@ -84,7 +92,7 @@ class validationDataGenerator(keras.utils.Sequence):
         file_encoded = self.tokenizer.texts_to_sequences([file_content])[0]
 
         sequences = []
-        for i in range(self.sliding_window_size + 1, len(file_encoded)+1):
+        for i in range(self.sliding_window_size + 1, len(file_encoded) + 1):
             sequence = file_encoded[i - (self.sliding_window_size + 1):i]
             sequences.append(sequence)
 
@@ -95,29 +103,27 @@ class validationDataGenerator(keras.utils.Sequence):
         y_b = y[0:largest(self.batch_size, y.shape[0])]
         X_b = X[0:largest(self.batch_size, X.shape[0])]
 
-
-
         return X_b, y_b
-
 
     def batch_generator(self):
         # properly check might give errors
         # Check if there are enough words left in the sequence to create a batch
         while True:
 
-            if self.batch_in_file == self.x_file.shape[0]/self.batch_size:
+            if self.batch_in_file == self.x_file.shape[0] / self.batch_size:
                 self.sequence_for_file = self.load_next_sequence()
                 self.batch_in_file = 0
                 gc.collect()
 
-            start = self.batch_in_file*self.batch_size
-            x_batch = np.array(self.x_file[start:start+self.batch_size, :])
+            start = self.batch_in_file * self.batch_size
+            x_batch = np.array(self.x_file[start:start + self.batch_size, :])
             affect_batch = self.affect_for_batch(x_batch)
-            x_batch = keras.utils.to_categorical(x_batch, num_classes=self.vocab_size)
+            x_batch = keras.utils.to_categorical(
+                x_batch, num_classes=self.vocab_size)
 
             self.batch_in_file += 1
 
-            y_batch = np.array(self.y_file[start:start+self.batch_size])
+            y_batch = np.array(self.y_file[start:start + self.batch_size])
             y_batch = to_categorical(y_batch, num_classes=self.vocab_size)
 
             yield {'input_1': x_batch, 'input_2': affect_batch}, y_batch

@@ -9,6 +9,7 @@ import numpy as np
 from Models.LM_model import LM_Model
 from Models.base_line_affect_LM_model import base_line_affect_lm_model
 
+
 def cumulative_distribution_function(probabilities):
     # floating point error
     total = sum(probabilities)
@@ -16,7 +17,7 @@ def cumulative_distribution_function(probabilities):
     c_sum = 0.0
     for p in probabilities:
         c_sum += p
-        cdf.append((c_sum/total))
+        cdf.append((c_sum / total))
     return cdf
 
 
@@ -27,8 +28,6 @@ def sample_index_from_distribution(probabilities):
     # Get the index of where x can be inserted to still keep the list ordered
     index = bisect.bisect(cdf, x)
     return index
-
-
 
 
 # Must send in a model with batch size 1, otherwise can not sample one word at a time
@@ -42,7 +41,8 @@ class sample_word:
         vocab_size = len(self.tokenizer.word_index) + 1
 
         #self.model = LM_Model(vocab_size, look_back=1, batch_size=1, stateful=True).model
-        self.model = base_line_affect_lm_model(vocab_size, look_back_steps=1, batch_size=1)
+        self.model = base_line_affect_lm_model(
+            vocab_size, look_back_steps=1, batch_size=1)
         self.model.load_weights('../model/best_weights_2.hdf5')
 
     def sample_new_sequence(self, text_sample):
@@ -90,7 +90,7 @@ class sample_word:
         encoded_word = array([encoded_word])
 
         # predict the probabilities for each word
-        #print(encoded_word.shape)
+        # print(encoded_word.shape)
         prediction = self.model.predict([encoded_word], verbose=0)
         # Sample a word based on the probabilities of the words
 
@@ -102,7 +102,7 @@ class sample_word:
         for word, index in self.tokenizer.word_index.items():
             if sampled_index == index:
                 sampled_word = word
-                #print(sampled_word)
+                # print(sampled_word)
                 break
 
         if sampled_word == 'unk':
@@ -119,6 +119,7 @@ class sample_word:
 
         return sampled_word
 
+
 if __name__ == '__main__':
 
     sentences = ['hi, who are you', 'I am the ']
@@ -133,7 +134,7 @@ if __name__ == '__main__':
 
     sampeler = sample_word()
     for word_seq in content:
-        #print(sampeler.tokenizer.word_index['pre-recorded'])
+        # print(sampeler.tokenizer.word_index['pre-recorded'])
         #word = 'The president is not in his office'
         # Initialize a sampeling sequence
         next_word = sampeler.sample_new_sequence(word_seq)
