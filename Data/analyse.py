@@ -84,7 +84,7 @@ for word in text.split(' '):
 	print(word_analyse_result)
 	for category in word_analyse_result:
 		result[category] += word_analyse_result[category]
-	
+
 	word_count += 1
 
 
