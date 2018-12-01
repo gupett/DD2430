@@ -1,4 +1,5 @@
 from tensorflow.keras import models
+from tensorflow.keras.models import load_model
 import pickle
 from numpy import array
 import random
@@ -6,6 +7,7 @@ import bisect
 import numpy as np
 
 from Models.LM_model import LM_Model
+from Models.base_line_affect_LM_model import base_line_affect_lm_model
 
 def cumulative_distribution_function(probabilities):
     # floating point error
@@ -32,16 +34,16 @@ def sample_index_from_distribution(probabilities):
 # Must send in a model with batch size 1, otherwise can not sample one word at a time
 class sample_word:
     def __init__(self):
-
         # Load the tokenizer from file
         with open('../model/tokenizer/tokenizer.pickle', 'rb') as handle:
             tokenizer = pickle.load(handle)
         self.tokenizer = tokenizer
 
         vocab_size = len(self.tokenizer.word_index) + 1
-        self.model = LM_Model(vocab_size, look_back=1, batch_size=1, stateful=True).model
-        self.model.load_weights('../model/best_weights_2.hdf5')
 
+        #self.model = LM_Model(vocab_size, look_back=1, batch_size=1, stateful=True).model
+        self.model = base_line_affect_lm_model(vocab_size, look_back_steps=1, batch_size=1)
+        self.model.load_weights('../model/best_weights_2.hdf5')
 
     def sample_new_sequence(self, text_sample):
         self.model.reset_states()
@@ -78,11 +80,10 @@ class sample_word:
 
         return sampled_word
 
-
     def sample_next_word(self, init_word):
         # Encode the init word into a integer
-        file_content = init_word.lower()
-        file_content = init_word.replace('\n', ' ')
+        #file_content = init_word.lower()
+        #file_content = init_word.replace('\n', ' ')
 
         encoded_word = array(self.tokenizer.texts_to_sequences([init_word])[0])
 

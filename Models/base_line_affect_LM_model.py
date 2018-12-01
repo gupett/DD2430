@@ -5,11 +5,15 @@ import numpy as np
 
 class base_line_affect_lm_model:
 
-    def __init__(self, vocab_size, batch_size, look_back_steps, embedding_matrix=None, bias_vector=None):
+    def __init__(self, vocab_size, batch_size, look_back_steps, embedding_matrix=True, bias_vector=None, embedding=False):
         self.vocab_size = vocab_size
         self.batch_size = batch_size
         self.look_back_steps = look_back_steps
-        self.embedding = np.transpose(embedding_matrix)
+        # Bool to tell if a pre trained word embedding is used
+        self.emb = embedding
+        # Check if embedding is used
+        if self.emb:
+            self.embedding = np.transpose(embedding_matrix)
         self.bias_vector = bias_vector
 
         # Parameter for tuning the affect energy term
@@ -21,7 +25,6 @@ class base_line_affect_lm_model:
     def define_model(self, look_back_steps, batch_size, state_ful=False):
 
         # The base LM model
-        # batch_input_shape=(batch_size, timesteps, data_dim)
         if state_ful:
             word_input = Input((look_back_steps, self.vocab_size), batch_size=batch_size)
         else:
@@ -33,10 +36,6 @@ class base_line_affect_lm_model:
         lstm_layer2 = LSTM(100, stateful=state_ful)(lstm_layer1)
         # Set the weights to the weights corresponding to the embedding
         dense_word_decoder = Dense(self.vocab_size, trainable=False, name='embedding_layer')(lstm_layer2)
-
-
-        #print('Embedding matrix shape: {}'.format(self.embedding.shape))
-
 
         # The energy term for affect words
         # The input is the LIWC feature extraction which has 5 categories (5 index input vector)
@@ -55,13 +54,11 @@ class base_line_affect_lm_model:
 
         model = models.Model(inputs=[word_input, affect_input], outputs=[prediction_layer])
 
-        if self.embedding == None:
+        if self.emb:
             weights = model.get_layer('embedding_layer').get_weights()
 
-            #print(weights[1].shape)
             weights[0] = self.embedding
             weights[1] = self.bias_vector
-            #print(weights)
             model.get_layer('embedding_layer').set_weights(weights)
 
             self.start_weights.append(weights[0])

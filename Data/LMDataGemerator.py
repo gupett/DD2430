@@ -55,7 +55,6 @@ class dataGenerator(keras.utils.Sequence):
     def nr_batch_per_epoch(self):
         batch_per_epoch = 0
         for file_path in FILES:
-            #print(file_path)
             with open(file_path) as file:
                 file_content = file.read()
 
@@ -76,7 +75,6 @@ class dataGenerator(keras.utils.Sequence):
             for index in row:
                 context.append(self.reverse_word_map[index])
             affect_batch[i,:] = self.affect_context.binary_affection_vector_for_context(context)
-            #print('affect size: {}'.format(affect_batch.shape))
 
         return affect_batch
 
@@ -105,8 +103,6 @@ class dataGenerator(keras.utils.Sequence):
         y_b = y[0:largest(self.batch_size, y.shape[0])]
         X_b = X[0:largest(self.batch_size, X.shape[0])]
 
-
-
         return X_b, y_b
 
 
@@ -122,23 +118,15 @@ class dataGenerator(keras.utils.Sequence):
 
             start = self.batch_in_file*self.batch_size
             x_batch = np.array(self.x_file[start:start+self.batch_size, :])
-            #print('x_batch size 1: {}'.format(x_batch.shape))
             affect_batch = self.affect_for_batch(x_batch)
             x_batch = keras.utils.to_categorical(x_batch, num_classes=self.vocab_size)
-            #print('x_batch size 2: {}'.format(x_batch.shape))
-            # Reshaping for LSTM layer input
-            #x_batch = x_batch.reshape(x_batch.shape[0], self.sliding_window_size, 1)
 
             self.batch_in_file += 1
 
             y_batch = np.array(self.y_file[start:start+self.batch_size])
-            #print('y_batch size 1: {}'.format(y_batch.shape))
             y_batch = to_categorical(y_batch, num_classes=self.vocab_size)
-            #print('y_batch size 2: {}'.format(y_batch.shape))
 
-            #yield {'word_input': x_batch, 'affect_input': affect_batch}, y_batch
             yield {'input_1': x_batch, 'input_2': affect_batch}, y_batch
-            #yield x_batch, y_batch
 
     # Gets the unique words from the json file
     def get_unique_words_from_json_file(self):

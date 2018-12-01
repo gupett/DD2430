@@ -10,7 +10,6 @@ from Data.analyse import affection_context
 
 FILE_EXTENSION = './Data/Data/validation/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
-#UNIQUE_WORD_FILE = './Data/Data/unique_words.json'
 
 # Function for finding the largest number less than K+1 divisible by X
 def largest(X, K):
@@ -66,9 +65,11 @@ class validationDataGenerator(keras.utils.Sequence):
             for index in row:
                 context.append(self.reverse_word_map[index])
             affect_batch[i,:] = self.affect_context.binary_affection_vector_for_context(context)
-            #print('affect size: {}'.format(affect_batch.shape))
 
         return affect_batch
+
+    def shuffle_batch(self):
+        print('time to shuffle batch file')
 
     def load_next_sequence(self):
         self.current_file_nr = (self.current_file_nr + 1) % len(FILES)
@@ -111,17 +112,12 @@ class validationDataGenerator(keras.utils.Sequence):
 
             start = self.batch_in_file*self.batch_size
             x_batch = np.array(self.x_file[start:start+self.batch_size, :])
-            #print('x_batch size 1: {}'.format(x_batch.shape))
             affect_batch = self.affect_for_batch(x_batch)
             x_batch = keras.utils.to_categorical(x_batch, num_classes=self.vocab_size)
-            # Reshaping for LSTM layer input
-            #x_batch = x_batch.reshape(x_batch.shape[0], self.sliding_window_size, 1)
-            #print('x_batch size: {}'.format(x_batch.shape))
+
             self.batch_in_file += 1
 
             y_batch = np.array(self.y_file[start:start+self.batch_size])
             y_batch = to_categorical(y_batch, num_classes=self.vocab_size)
 
-            #yield {'word_input': x_batch, 'affect_input': affect_batch}, y_batch
             yield {'input_1': x_batch, 'input_2': affect_batch}, y_batch
-            #yield x_batch, y_batch
