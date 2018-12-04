@@ -5,6 +5,19 @@ categories = ['anger', 'anticipation', 'disgust', 'fear', 'joy',
 
 
 class affection_context:
+    """A class used to extract affection context from text.
+
+    Attributes
+    ----------
+    affect_model : The affect model
+        Description of attribute `affect_model`.
+    create_affect_model : Creates the affect model using NRC Emotion Lexicon
+        Description of attribute `create_affect_model`.
+    affect_categories : The affect catory types are ['anger', 'anticipation', 'disgust', 'fear', 'joy',
+	              'negative', 'positive', 'sadness', 'surprise', 'trust']
+        Description of attribute `affect_categories`.
+
+    """
 
     def __init__(self):
         self.affect_model = self.create_affect_model()
