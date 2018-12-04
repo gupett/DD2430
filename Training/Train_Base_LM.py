@@ -65,7 +65,7 @@ class Training:
 
         self.model.fit_generator(generator=self.training_generator.batch_generator(),
                                  steps_per_epoch=self.training_generator.batch_per_epoch,
-                                 epochs=epochs, verbose=1, callbacks=callbacks,
+                                 epochs=epochs, verbose=2, callbacks=callbacks,
                                  validation_data=self.validation_generator.batch_generator(),
                                  validation_steps=self.validation_generator.batch_per_epoch)
 

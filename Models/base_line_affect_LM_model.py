@@ -94,6 +94,8 @@ class base_line_affect_lm_model:
 
         # The energy term for affect words
         # The input is the LIWC feature extraction which has 5 categories (5 index input vector)
+
+        
         affect_input = Input((5,))
         dense_1 = Dense(50, activation=sigmoid)(affect_input)
         dense_2 = Dense(100, activation=sigmoid)(dense_1)
