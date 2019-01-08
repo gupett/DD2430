@@ -5,6 +5,7 @@ model
 Models/__pycache__
 Training/__pycache__
 Data/__pycache__
+Data/data_test.py
 Word_embedding/*
 treat-data
 Data/Data

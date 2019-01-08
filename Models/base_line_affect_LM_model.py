@@ -5,7 +5,7 @@ import numpy as np
 
 class base_line_affect_lm_model:
 
-    def __init__(self, vocab_size, batch_size, look_back_steps, embedding_matrix=True, bias_vector=None, embedding=False):
+    def __init__(self, vocab_size, batch_size, look_back_steps, embedding_matrix=None, bias_vector=None, embedding=False, state_ful=False):
         self.vocab_size = vocab_size
         self.batch_size = batch_size
         self.look_back_steps = look_back_steps
@@ -18,7 +18,7 @@ class base_line_affect_lm_model:
 
         # Parameter for tuning the affect energy term
         self.start_weights = []
-        self.model = self.define_model(look_back_steps, batch_size)
+        self.model = self.define_model(look_back_steps, batch_size, state_ful=state_ful)
         self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 
@@ -79,3 +79,4 @@ class base_line_affect_lm_model:
         model.set_weights(old_weights)
 
         return model
+

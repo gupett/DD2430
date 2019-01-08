@@ -5,8 +5,8 @@ from numpy import array
 import random
 import bisect
 import numpy as np
+from tensorflow.keras import utils
 
-from Models.LM_model import LM_Model
 from Models.base_line_affect_LM_model import base_line_affect_lm_model
 
 def cumulative_distribution_function(probabilities):
@@ -39,11 +39,12 @@ class sample_word:
             tokenizer = pickle.load(handle)
         self.tokenizer = tokenizer
 
-        vocab_size = len(self.tokenizer.word_index) + 1
+        self.vocab_size = len(self.tokenizer.word_index) + 1
+        print(str(self.vocab_size) + ' size!!!!!!')
 
         #self.model = LM_Model(vocab_size, look_back=1, batch_size=1, stateful=True).model
-        self.model = base_line_affect_lm_model(vocab_size, look_back_steps=1, batch_size=1)
-        self.model.load_weights('../model/best_weights_2.hdf5')
+        self.model = base_line_affect_lm_model(self.vocab_size, look_back_steps=1, batch_size=1, state_ful=True).model
+        self.model.load_weights('../model/best_weights.hdf5')
 
     def sample_new_sequence(self, text_sample):
         self.model.reset_states()
@@ -54,10 +55,23 @@ class sample_word:
         # Loop over all the word indexes in the list and predict the next word
         for word in encoded_sequence:
             encoded_word = array([word])
-            word_prediction = self.model.predict(encoded_word, verbose=2)
+
+            affect_batch = np.zeros((1, 5))
+            affect_batch[0, :] = [0, 1, 0, 0, 0]
+
+            x_batch = utils.to_categorical(encoded_word, num_classes=self.vocab_size)
+            x_batch = np.expand_dims(x_batch, axis=0)
+
+            print('shape: {}!!!!!'.format(x_batch.shape))
+
+            input = {'input_1': x_batch, 'input_2': affect_batch}
+            print('Not passed prediction')
+
+            word_prediction = self.model.predict(input, verbose=2)
 
         # Sample a word based on the probabilities of the words
         #sampled_index = sample_index_from_distribution(word_prediction[0])
+
         sampled_index = np.argmax(word_prediction[0])
 
         # Loop over the tokenizer and find the word corresponding to the sampled index
@@ -91,7 +105,20 @@ class sample_word:
 
         # predict the probabilities for each word
         #print(encoded_word.shape)
-        prediction = self.model.predict([encoded_word], verbose=0)
+        affect_batch = np.zeros((1, 5))
+        affect_batch[0, :] = [0, 1, 0, 1, 1]
+
+        x_batch = utils.to_categorical(encoded_word, num_classes=self.vocab_size)
+        x_batch = np.expand_dims(x_batch, axis=0)
+
+        print('shape: {}!!!!!'.format(x_batch.shape))
+
+        input = {'input_1': x_batch, 'input_2': affect_batch}
+        print('Not passed prediction')
+
+
+        prediction = self.model.predict(input, verbose=0)
+        print('Passed prediction')
         # Sample a word based on the probabilities of the words
 
         sampled_index = np.argmax(prediction[0])
@@ -131,6 +158,7 @@ if __name__ == '__main__':
     # you may also want to remove whitespace characters like `\n` at the end of each line
     content = [x.strip() for x in content]
 
+    print(content)
     sampeler = sample_word()
     for word_seq in content:
         #print(sampeler.tokenizer.word_index['pre-recorded'])
@@ -139,7 +167,7 @@ if __name__ == '__main__':
         next_word = sampeler.sample_new_sequence(word_seq)
 
         # Sample based on the words returned from the model
-        sample_size = 5
+        sample_size = 10
         sampled_sentence = word_seq + ' ' + next_word
         for i in range(sample_size):
             #print('Next word: {}'.format(next_word))

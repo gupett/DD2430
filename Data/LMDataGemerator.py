@@ -8,8 +8,11 @@ import gc
 import pickle
 from Data.analyse import affection_context
 
-FILE_EXTENSION = './Data/Data/training/'
+from Data.LMVaildationDataGenerator import validationDataGenerator
+
+FILE_EXTENSION = './Data/Data/training_small/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
+print(FILES)
 UNIQUE_WORD_FILE = './Data/Data/unique_words.txt'
 
 # Function for finding the largest number less than K+1 divisible by X
@@ -19,7 +22,7 @@ def largest(X, K):
 
 class dataGenerator(keras.utils.Sequence):
 
-    def __init__(self, batch_size=20, sliding_window_size=20, shuffle=False, Affect_LM=False, existing_tokenizer=False):
+    def __init__(self, batch_size=20, sliding_window_size=20, shuffle=False, existing_tokenizer=False):
         self.batch_size = batch_size
         self.sliding_window_size = sliding_window_size
         self.shuffle = shuffle
@@ -45,39 +48,21 @@ class dataGenerator(keras.utils.Sequence):
         self.batch_per_epoch = self.nr_batch_per_epoch()
 
         self.current_file_nr = -1
-        self.x_file, self.y_file = self.load_next_sequence()
+        # Init the file data variables
+        self.x_file = None
+        self.y_file = None
+        # Load the data from file and set values of self.x_file and self.y_file
+        self.load_next_sequence()
         # To keep track where in the current sequence the last batch was taken from
         self.batch_in_file = 0
 
         self.affect_context = affection_context()
         self.affect_categories = self.affect_context.affect_categories
 
-    def nr_batch_per_epoch(self):
-        batch_per_epoch = 0
-        for file_path in FILES:
-            with open(file_path) as file:
-                file_content = file.read()
+        ### Tet varible ######
+        self.NEXT_FILE = True
 
-            file_content = file_content.lower()
-            file_content = file_content.replace('\n', ' ')
-
-            # Get an encoding of the text
-            file_encoded_sequence = self.tokenizer.texts_to_sequences([file_content])[0]
-
-            # the // operator gives int values
-            batch_per_epoch += ((len(file_encoded_sequence)-(self.sliding_window_size+1))//(self.batch_size))
-        return batch_per_epoch
-
-    def affect_for_batch(self, x_batch):
-        affect_batch = np.zeros((x_batch.shape[0], self.affect_categories))
-        for i, row in enumerate(x_batch):
-            context = []
-            for index in row:
-                context.append(self.reverse_word_map[index])
-            affect_batch[i,:] = self.affect_context.binary_affection_vector_for_context(context)
-
-        return affect_batch
-
+    # Load data from one of the many trainingfiles, data which later is transformed in to batch data
     def load_next_sequence(self):
         self.current_file_nr = (self.current_file_nr + 1) % len(FILES)
         print('Current file is: {}'.format(self.current_file_nr))
@@ -103,8 +88,8 @@ class dataGenerator(keras.utils.Sequence):
         y_b = y[0:largest(self.batch_size, y.shape[0])]
         X_b = X[0:largest(self.batch_size, X.shape[0])]
 
-        return X_b, y_b
-
+        self.x_file = X_b
+        self.y_file = y_b
 
     def batch_generator(self):
         # properly check might give errors
@@ -112,9 +97,12 @@ class dataGenerator(keras.utils.Sequence):
         while True:
 
             if self.batch_in_file == self.x_file.shape[0]/self.batch_size:
-                self.sequence_for_file = self.load_next_sequence()
+                self.load_next_sequence()
                 self.batch_in_file = 0
+                self.NEXT_FILE = True
                 gc.collect()
+            else:
+                self.NEXT_FILE = False
 
             start = self.batch_in_file*self.batch_size
             x_batch = np.array(self.x_file[start:start+self.batch_size, :])
@@ -127,6 +115,33 @@ class dataGenerator(keras.utils.Sequence):
             y_batch = to_categorical(y_batch, num_classes=self.vocab_size)
 
             yield {'input_1': x_batch, 'input_2': affect_batch}, y_batch
+
+    ############ Help methods for the class ##################
+    def affect_for_batch(self, x_batch):
+        affect_batch = np.zeros((x_batch.shape[0], self.affect_categories))
+        for i, row in enumerate(x_batch):
+            context = []
+            for index in row:
+                context.append(self.reverse_word_map[index])
+            affect_batch[i,:] = self.affect_context.binary_affection_vector_for_context(context)
+
+        return affect_batch
+
+    def nr_batch_per_epoch(self):
+        batch_per_epoch = 0
+        for file_path in FILES:
+            with open(file_path) as file:
+                file_content = file.read()
+
+            file_content = file_content.lower()
+            file_content = file_content.replace('\n', ' ')
+
+            # Get an encoding of the text
+            file_encoded_sequence = self.tokenizer.texts_to_sequences([file_content])[0]
+
+            # the // operator gives int values
+            batch_per_epoch += ((len(file_encoded_sequence)-(self.sliding_window_size+1))//(self.batch_size))
+        return batch_per_epoch
 
     # Gets the unique words from the json file
     def get_unique_words_from_json_file(self):
@@ -145,3 +160,90 @@ class dataGenerator(keras.utils.Sequence):
         words = [word for word in content.split(' ') if len(word) > 0]
 
         return words
+
+def is_one_hot_encoded(encoding):
+    hy = True
+    for vec in encoding:
+        h = False
+        # f = True
+        for i in vec:
+            if i == 1: #and f:
+                print('vector is one hot encoded')
+                h = True
+                #f = False
+            #if i == 1 and not f:
+            #    h = False
+        if not h:
+            hy = False
+    return hy
+
+def one_hot_2_sequence(one_hot_sequence):
+    sequence = []
+    for vec in one_hot_sequence:
+        for i, v, in enumerate(vec):
+            if v == 1:
+                sequence.append(i)
+                break
+    return sequence
+
+if __name__ == '__main__':
+
+    ## Testing the training data generator ##
+    dg = dataGenerator(batch_size=4, sliding_window_size=3, shuffle=False, existing_tokenizer=False)
+    bg = dg.batch_generator()
+    data, target = next(bg)
+    semantic_data = data['input_1']
+    affect_data = data['input_2']
+    #print(is_one_hot_encoded(semantic_data[0]))
+    tok = dg.tokenizer
+    '''
+    print(len(tok.word_index))
+    print(tok.word_index)
+
+    for i in range(2*(dg.batch_per_epoch)):
+        data, target = next(bg)
+
+        if dg.NEXT_FILE:
+            semantic_data = data['input_1']
+            affect_data = data['input_2']
+            # print(is_one_hot_encoded(semantic_data[0]))
+            print(one_hot_2_sequence(semantic_data[0]))
+            #print(semantic_data)
+            #print(affect_data)
+
+    ## Testing the validation data generator ##
+    print()
+    print()
+    print('Validation data test')
+    dg = validationDataGenerator(tok, batch_size=4, sliding_window_size=3, shuffle=False)
+    bg = dg.batch_generator()
+    data, target = next(bg)
+    semantic_data = data['input_1']
+    affect_data = data['input_2']
+    # print(is_one_hot_encoded(semantic_data[0]))
+    tok = dg.tokenizer
+    print(len(tok.word_index))
+    print(tok.word_index)
+
+    for i in range(2 * (dg.batch_per_epoch)):
+        data, target = next(bg)
+
+        if dg.NEXT_FILE:
+            semantic_data = data['input_1']
+            affect_data = data['input_2']
+            # print(is_one_hot_encoded(semantic_data[0]))
+            print(one_hot_2_sequence(semantic_data[0]))
+            # print(semantic_data)
+            # print(affect_data)
+    '''
+
+    print(tok.index_word)
+    print(tok.texts_to_sequences(['hesitated among the']))
+
+'''
+## Check of data generation ##
+Tokenizer has 1000 plus unk, making it 10001 words
+All the word sequences are one hot encoded
+
+hesitated does not exist in the data unique words file, but it does exist in the corpus
+'''
