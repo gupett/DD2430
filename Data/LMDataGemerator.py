@@ -10,7 +10,7 @@ from Data.analyse import affection_context
 
 from Data.LMVaildationDataGenerator import validationDataGenerator
 
-FILE_EXTENSION = './Data/Data/training_small/'
+FILE_EXTENSION = './Data/Data/training/'
 FILES = [join(FILE_EXTENSION, file_name) for file_name in listdir(FILE_EXTENSION) if isfile(join(FILE_EXTENSION, file_name)) and file_name != '.DS_Store']
 print(FILES)
 UNIQUE_WORD_FILE = './Data/Data/unique_words.txt'
