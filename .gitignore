@@ -5,7 +5,7 @@ model
 Models/__pycache__
 Training/__pycache__
 Data/__pycache__
-Word_embedding/*
+Training/Word_embedding/*
 treat-data
 Data/Data
 nohup.out

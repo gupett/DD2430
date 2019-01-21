@@ -15,7 +15,6 @@ UNIQUE_WORD_FILE = './Data/Data/unique_words.txt'
 
 # Function for finding the largest number less than K+1 divisible by X
 
-
 def largest(X, K):
     # returning ans
     return (K - (K % X))

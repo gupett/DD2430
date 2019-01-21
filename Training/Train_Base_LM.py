@@ -1,13 +1,12 @@
 import sys
-
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
 from time import time
 import numpy as np
 import pickle
-
-from Models.base_line_affect_LM_model import base_line_affect_lm_model
+import os
 from Data import LMDataGemerator
 from Data import LMVaildationDataGenerator
+from Models.base_line_affect_LM_model import base_line_affect_lm_model
 
 SLIDING_WINDOW_SIZE = 20
 BATCH_SIZE = 20
@@ -49,35 +48,38 @@ class Training:
     def train(self, epochs):
 
         # Save the tokenizer to file for use at inference time
-        with open('./model/tokenizer/tokenizer.pickle', 'wb') as handle:
+        #f = open(os.path.join(os.getcwd(), 'Training/Word_embedding/glove.6B.100d.txt'))
+        with open('Training/model/tokenizer/tokenizer.pickle', 'wb') as handle:
             pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         # define a tensorboard callback
         tensorboard = TensorBoard(log_dir="logs/{}".format(time()))
 
         # define early stopping callback
-        earlystop = EarlyStopping(monitor='loss', min_delta=0.0001, patience=25, verbose=0, mode='auto')
+        earlystop = EarlyStopping(monitor='loss', min_delta=0.0001, patience=25, verbose=1, mode='auto')
 
         # file_path = './model/weights-{epoch:02d}-{loss:.4f}.hdf5'
-        file_path = './model/best_weights.hdf5'
-        checkpoint = ModelCheckpoint(file_path, monitor='loss', verbose=0, save_best_only=True, mode='min')
+        file_path = 'Training/model/best_weights.hdf5'
+        checkpoint = ModelCheckpoint(file_path, monitor='loss', verbose=1, save_best_only=True, mode='min')
         callbacks = [checkpoint, earlystop, tensorboard]
 
         self.model.fit_generator(generator=self.training_generator.batch_generator(),
                                  steps_per_epoch=self.training_generator.batch_per_epoch,
-                                 epochs=epochs, verbose=2, callbacks=callbacks,
+                                 epochs=epochs, verbose=1, callbacks=callbacks,
                                  validation_data=self.validation_generator.batch_generator(),
                                  validation_steps=self.validation_generator.batch_per_epoch)
 
         # Create new model with same weights but different batch size
         new_model = self.lm_model.redefine_model(self.model)
-        new_model.save_weights('./model/lm_inference_weights.hdf5')
+        new_model.save_weights('Training/model/lm_inference_weights.hdf5')
 
     # Helper function to define the model
     def get_embedding_matrix(self):
         # load the entire embedding from file into a dictionary
         embeddings_index = dict()
-        f = open('./Word_embedding/glove.6B.100d.txt')
+
+        #f = open('./Word_embedding/glove.6B.100d.txt')
+        f = open(os.path.join(os.getcwd(), 'Training/Word_embedding/glove.6B.100d.txt'))
         for line in f:
             # splits on spaces
             values = line.split()
@@ -92,11 +94,14 @@ class Training:
         # Initialize a embedding matrix with shape vocab_size x word_vector_size
         embedding_matrix = np.zeros((self.vocab_size, 100))
         # Go through the tokenizer and for each index add the corresponding word vector to the row
+
+        found_words = 0;
         for word, index in self.tokenizer.word_index.items():
             embedding_vector = embeddings_index.get(word)
             if embedding_vector is not None:
+                found_words += 1;
                 embedding_matrix[index] = embedding_vector
-
+        print("found words: ", found_words)
         return embedding_matrix
 
     def get_bias_vector(self):
@@ -126,4 +131,4 @@ class Training:
 
 if __name__ == '__main__':
     trainer = Training()
-    trainer.train(10)
+    trainer.train(1)

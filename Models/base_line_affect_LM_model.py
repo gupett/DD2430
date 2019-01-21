@@ -95,13 +95,15 @@ class base_line_affect_lm_model:
         # The energy term for affect words
         # The input is the LIWC feature extraction which has 5 categories (5 index input vector)
 
-        
+
         affect_input = Input((5,))
         dense_1 = Dense(50, activation=sigmoid)(affect_input)
         dense_2 = Dense(100, activation=sigmoid)(dense_1)
         # The report does not say anything about the activation function for the second layer
         dense_affect_decoder_1 = Dense(self.vocab_size)(dense_2)
         # multiply the affect vector with the beta energy term
+
+        # CAN WE SEE IF THIS IS BEING TRAINED?? Run for a few epochs and visualize the embedding
         beta = 1.75
         dense_affect_decoder = Lambda(
             lambda x: x * beta)(dense_affect_decoder_1)
